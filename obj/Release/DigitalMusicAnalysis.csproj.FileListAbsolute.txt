@@ -14,3 +14,17 @@ C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAna
 C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.csproj.CopyComplete
 C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.exe
 C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.pdb
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\bin\Release\DigitalMusicAnalysis.exe.config
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.exe
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.pdb
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\bin\Release\DigitalMusicAnalysis.exe
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\bin\Release\DigitalMusicAnalysis.pdb
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\MainWindow.g.cs
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\App.g.cs
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis_MarkupCompile.cache
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis_MarkupCompile.lref
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\MainWindow.baml
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.g.resources
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.Properties.Resources.resources
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.csproj.GenerateResource.Cache
+E:\Users\JohnWang\Documents\GitHub\DigitalMusicAnalysis\obj\Release\DigitalMusicAnalysis.csprojResolveAssemblyReference.cache

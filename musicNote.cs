@@ -18,12 +18,13 @@ namespace DigitalMusicAnalysis
         {
             frequency = freq;
             duration = dur;
-            double freqPitch = (Math.Log((freq / 110), 2) * 12 + 1);
-
+            // ceilling round up floor round down
+            double freqPitch = (Math.Log((freq / 110), 2) * 12 + 1);// working out the frequency of the pitch
+            // if the difference between ceiling is largr or equal to the difference to the floor
             if ((Math.Ceiling(freqPitch) - freqPitch) >= (freqPitch - Math.Floor(freqPitch)))
             {
-                pitch = (int)Math.Floor(freqPitch);
-                error = (freqPitch - Math.Floor(freqPitch));
+                pitch = (int)Math.Floor(freqPitch);  // store the floor of the pitch into an integer
+                error = (freqPitch - Math.Floor(freqPitch)); // workout the error percentage
             }
             else
             {
@@ -33,7 +34,7 @@ namespace DigitalMusicAnalysis
 
             if (pitch%12 == 0 || pitch%12 == 2 || pitch%12 == 5 || pitch%12 == 7 || pitch%12 == 10)
             {
-                flat = true;
+                flat = true; // checking if theres a flate note
             }
 
             mult = (pitch - pitch % 12) / 12;
