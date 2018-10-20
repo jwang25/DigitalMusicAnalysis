@@ -1,0 +1,5 @@
+C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Debug\DigitalMusicAnalysis.csprojAssemblyReference.cache
+C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Debug\MainWindow.g.cs
+C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Debug\App.g.cs
+C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Debug\DigitalMusicAnalysis_MarkupCompile.cache
+C:\Users\wwwwa\Documents\Engineering\3rd Year\Semester 2\CAB 401\DigitalMusicAnalysis\obj\Debug\DigitalMusicAnalysis_MarkupCompile.lref
