@@ -452,7 +452,6 @@ namespace DigitalMusicAnalysis
             string[] alignedStrings = new string[2];
 
             alignedStrings = stringMatch(sheetPitchArray, notePitchArray);
-            
 
             musicNote[] alignedStaffArray = new musicNote[alignedStrings[0].Length / 2];
             musicNote[] alignedNoteArray = new musicNote[alignedStrings[1].Length / 2];
