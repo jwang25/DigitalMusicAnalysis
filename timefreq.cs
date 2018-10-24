@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Numerics;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace DigitalMusicAnalysis
 {
@@ -8,6 +11,10 @@ namespace DigitalMusicAnalysis
         public float[][] timeFreqData;
         public int wSamp;
         public Complex[] twiddles;
+        const int thread_num = 4;
+
+
+
 
         public timefreq(float[] x, int windowSamp)
         {
@@ -22,12 +29,38 @@ namespace DigitalMusicAnalysis
                 twiddles[ii] = Complex.Pow(Complex.Exp(-i), (float)a);
             }
 
-            timeFreqData = new float[wSamp/2][];
+            timeFreqData = new float[wSamp / 2][];
 
             int nearest = (int)Math.Ceiling((double)x.Length / (double)wSamp);
             nearest = nearest * wSamp;
 
             Complex[] compX = new Complex[nearest];
+
+            //Thread[] threads = new Thread[thread_num];
+            /***
+            for (int tid = 0; tid < thread_num; tid++) {
+                threads[tid] = new Thread(() =>
+               {
+                   for (int kk = 0; kk < nearest; kk++)
+                   {
+                       if (kk < x.Length)
+                       {
+                           compX[kk] = x[kk];
+                       }
+                       else
+                       {
+                           compX[kk] = Complex.Zero;
+                       }
+                   }
+               });
+                threads[tid].Start();
+
+
+            }
+        
+            foreach(Thread t in threads)
+                t.Join();
+            **/
             for (int kk = 0; kk < nearest; kk++)
             {
                 if (kk < x.Length)
@@ -39,6 +72,7 @@ namespace DigitalMusicAnalysis
                     compX[kk] = Complex.Zero;
                 }
             }
+            
 
 
             int cols = 2 * nearest /wSamp;
@@ -150,6 +184,8 @@ namespace DigitalMusicAnalysis
 
            return Y;
         }
+
+       
         
     }
 }

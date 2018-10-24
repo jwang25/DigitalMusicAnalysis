@@ -11,6 +11,7 @@ using System.Threading;
 using System.Numerics;
 using NAudio.Wave;
 using System.Xml;
+using System.Threading.Tasks;
 
 namespace DigitalMusicAnalysis
 {
@@ -303,14 +304,16 @@ namespace DigitalMusicAnalysis
 
             HFC = new float[stftRep.timeFreqData[0].Length];
 
+           
             for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
-            {
-                for (int ii = 0; ii < stftRep.wSamp / 2; ii++)
                 {
-                    HFC[jj] = HFC[jj] + (float)Math.Pow((double)stftRep.timeFreqData[ii][jj] * ii, 2);
-                }
+                    for (int ii = 0; ii < stftRep.wSamp / 2; ii++)
+                    {
+                        HFC[jj] = HFC[jj] + (float)Math.Pow((double)stftRep.timeFreqData[ii][jj] * ii, 2);
+                    }
 
-            }
+                }
+            
 
             float maxi = HFC.Max();
 

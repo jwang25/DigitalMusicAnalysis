@@ -7,7 +7,7 @@ namespace DigitalMusicAnalysis
     {
         public double baseFreq;
         public double[] heights;
-        public float div;
+        public float div; 
 
         public noteGraph(float inRange, float divisor)
         {
