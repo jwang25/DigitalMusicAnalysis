@@ -11,7 +11,7 @@ namespace DigitalMusicAnalysis
         public float[][] timeFreqData;
         public int wSamp;
         public Complex[] twiddles;
-        const int thread_num = 4;
+        const int thread_num = 8;
 
 
 
@@ -35,32 +35,22 @@ namespace DigitalMusicAnalysis
             nearest = nearest * wSamp;
 
             Complex[] compX = new Complex[nearest];
+            // using 4 cores
+            Parallel.For (0, nearest, new ParallelOptions()
+            { MaxDegreeOfParallelism=System.Environment.ProcessorCount},kk => {
+               
+                    if (kk < x.Length)
+                    {
+                        compX[kk] = x[kk];
+                    }
+                    else
+                    {
+                        compX[kk] = Complex.Zero;
+                    }
+                
+            });
 
-            //Thread[] threads = new Thread[thread_num];
-            /***
-            for (int tid = 0; tid < thread_num; tid++) {
-                threads[tid] = new Thread(() =>
-               {
-                   for (int kk = 0; kk < nearest; kk++)
-                   {
-                       if (kk < x.Length)
-                       {
-                           compX[kk] = x[kk];
-                       }
-                       else
-                       {
-                           compX[kk] = Complex.Zero;
-                       }
-                   }
-               });
-                threads[tid].Start();
-
-
-            }
-        
-            foreach(Thread t in threads)
-                t.Join();
-            **/
+            /*
             for (int kk = 0; kk < nearest; kk++)
             {
                 if (kk < x.Length)
@@ -72,16 +62,17 @@ namespace DigitalMusicAnalysis
                     compX[kk] = Complex.Zero;
                 }
             }
-            
+            */
 
 
             int cols = 2 * nearest /wSamp;
-
-            for (int jj = 0; jj < wSamp / 2; jj++)
+            Parallel.For(0, wSamp / 2, new ParallelOptions()
+            { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, jj =>
+            //for (int jj = 0; jj < wSamp / 2; jj++)
             {
                 timeFreqData[jj] = new float[cols];
             }
-
+            );
             timeFreqData = stft(compX, wSamp);
 	
         }
@@ -139,7 +130,7 @@ namespace DigitalMusicAnalysis
             return Y;
         }
         // new class
-        Complex[] fft(Complex[] x)
+        public Complex[] fft(Complex[] x)
         {
             int ii = 0;
             int kk = 0;
@@ -159,7 +150,9 @@ namespace DigitalMusicAnalysis
                 Complex[] O = new Complex[N/2];
                 Complex[] even = new Complex[N/2];
                 Complex[] odd = new Complex[N/2];
-
+                /*Parallel.For( 0,N, new ParallelOptions()
+                { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, ii =>
+                */
                 for (ii = 0; ii < N; ii++)
                 {
 
@@ -172,14 +165,18 @@ namespace DigitalMusicAnalysis
                         odd[(ii - 1) / 2] = x[ii];
                     }
                 }
+               // );
 
                 E = fft(even);
                 O = fft(odd);
-
+                /*Parallel.For(0,N, new ParallelOptions()
+                { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, kk =>
+                */
                 for (kk = 0; kk < N; kk++)
                 {
                     Y[kk] = E[(kk % (N / 2))] + O[(kk % (N / 2))] * twiddles[kk * wSamp / N];
                 }
+                //);
             }
 
            return Y;

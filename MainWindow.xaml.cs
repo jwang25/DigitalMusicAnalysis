@@ -12,6 +12,7 @@ using System.Numerics;
 using NAudio.Wave;
 using System.Xml;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace DigitalMusicAnalysis
 {
@@ -28,19 +29,24 @@ namespace DigitalMusicAnalysis
         private string filename;
         private enum pitchConv { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B };
         private double bpm = 70;
-
+        const int thread_num = 4;
+        Stopwatch stopwatch = new Stopwatch();
         public MainWindow()
         {
+
             InitializeComponent();
             filename = openFile("Select Audio (wav) file");
             string xmlfile = openFile("Select Score (xml) file");
             Thread check = new Thread(new ThreadStart(updateSlider)); // song is playing while the slider gets up to date
+            stopwatch.Start();
             loadWave(filename); //load the audio file
             freqDomain(); // short term fourier transform
             sheetmusic = readXML(xmlfile);
             onsetDetection(); // when one note starts and the next one begins
             loadImage();
             loadHistogram();
+            stopwatch.Stop();
+            System.Console.Out.Write(" \n time= " + stopwatch.Elapsed + "\n");
             playBack();
             check.Start();
 
@@ -125,6 +131,7 @@ namespace DigitalMusicAnalysis
 
             Rectangle[] lowestRects = null;
             lowestRects = new Rectangle[(int)Math.Floor(110 / divisor)];
+
             for (int ii = 0; ii < (int)Math.Floor(110 / divisor); ii++)
             {
                 double lowestMarg = Math.Log(((110 + ii * divisor) / 110), 2) * 240;
@@ -264,7 +271,12 @@ namespace DigitalMusicAnalysis
         {
             stftRep = new timefreq(waveIn.wave, 2048); // takes the input wavefile 
             pixelArray = new float[stftRep.timeFreqData[0].Length * stftRep.wSamp / 2];
-            for (int jj = 0; jj < stftRep.wSamp / 2; jj++)
+            Parallel.For(0, stftRep.wSamp / 2, new ParallelOptions()
+            { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, jj =>
+            
+
+
+           // for (int jj = 0; jj < stftRep.wSamp / 2; jj++)
             {
                 for (int ii = 0; ii < stftRep.timeFreqData[0].Length; ii++)
                 {
@@ -272,7 +284,9 @@ namespace DigitalMusicAnalysis
                     pixelArray[jj * stftRep.timeFreqData[0].Length + ii] = stftRep.timeFreqData[jj][ii];
                 }
             }
-
+        
+        );
+    
         }
 
         // Onset Detection function - Determines Start and Finish times of a note and the frequency of the note over each duration.
@@ -303,17 +317,18 @@ namespace DigitalMusicAnalysis
             SolidColorBrush whiteBrush = new SolidColorBrush(Colors.White);
 
             HFC = new float[stftRep.timeFreqData[0].Length];
-
-           
-            for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
+            //parallel
+            Parallel.For(0, stftRep.timeFreqData[0].Length, new ParallelOptions()
+            {MaxDegreeOfParallelism = System.Environment.ProcessorCount},jj=>
+            //for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
                 {
                     for (int ii = 0; ii < stftRep.wSamp / 2; ii++)
                     {
                         HFC[jj] = HFC[jj] + (float)Math.Pow((double)stftRep.timeFreqData[ii][jj] * ii, 2);
                     }
 
-                }
-            
+               }
+           );
 
             float maxi = HFC.Max();
 
@@ -321,7 +336,8 @@ namespace DigitalMusicAnalysis
             {
                 HFC[jj] = (float)Math.Pow((HFC[jj] / maxi), 2);
             }
-
+            //Parallel.For(0, stftRep.timeFreqData[0].Length,new ParallelOptions()
+            //{ MaxDegreeOfParallelism=System.Environment.ProcessorCount},jj=>
             for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
             {
                 if (starts > stops)
@@ -342,6 +358,7 @@ namespace DigitalMusicAnalysis
 
                 }
             }
+            //);
 
             if (starts > stops)
             {
@@ -382,7 +399,7 @@ namespace DigitalMusicAnalysis
                 }
 
                 Y = new Complex[nearest];
-
+             
                 Y = fft(compX, nearest);
 
                 absY = new double[nearest];
@@ -461,6 +478,8 @@ namespace DigitalMusicAnalysis
             int staffCount = 0;
             int noteCount = 0;
 
+           // Parallel.For(0, alignedStrings[0].Length / 2 , new ParallelOptions()
+            //{ MaxDegreeOfParallelism = System.Environment.ProcessorCount },ii =>
             for (int ii = 0; ii < alignedStrings[0].Length / 2; ii++)
             {
 
@@ -484,6 +503,7 @@ namespace DigitalMusicAnalysis
                     noteCount++;
                 }
             }
+           // );
 
             // STAFF TAB DISPLAY
 
@@ -1107,10 +1127,10 @@ namespace DigitalMusicAnalysis
             }
 
             System.Console.Out.Write("\n\n----------------  String Matching ------------------\n\n");
-            //stopwatch
+
             System.Console.Out.Write(AlignA + "\n");
             System.Console.Out.Write(AlignB + "\n");
-
+            
             string[] returnArray = new string[2];
 
             returnArray[0] = AlignA;
