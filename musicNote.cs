@@ -46,40 +46,27 @@ namespace DigitalMusicAnalysis
                     break;
 
                 case 1:
-
-                case 2:
-    
-                case 3:
                     staffPos = 1 + 7 * mult;
                     break;
 
-                case 4:
+                case 3:
                     staffPos = 2 + 7 * mult;
                     break;
 
-                case 5:
-         
-
-                case 6:
+                case 4:
                     staffPos = 3 + 7 * mult;
                     break;
-
-                case 7:
-      
-                case 8:
+                case 5:
                     staffPos = 4 + 7 * mult;
                     break;
 
-                case 9:
+                case 6:
                     staffPos = 5 + 7 * mult;
                     break;
-
-                case 10:
-
-
-                case 11:
+                case 7:
                     staffPos = 6 + 7 * mult;
                     break;
+                    
             }
         }
     }

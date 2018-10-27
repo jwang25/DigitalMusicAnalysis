@@ -11,8 +11,8 @@ namespace DigitalMusicAnalysis
         public float[][] timeFreqData;
         public int wSamp;
         public Complex[] twiddles;
-        const int thread_num = 8;
-
+        const int thread_num = 4;
+        //FFT fft = new FFT();
 
 
 
@@ -37,7 +37,8 @@ namespace DigitalMusicAnalysis
             Complex[] compX = new Complex[nearest];
             // using 4 cores
             Parallel.For (0, nearest, new ParallelOptions()
-            { MaxDegreeOfParallelism=System.Environment.ProcessorCount},kk => {
+            { MaxDegreeOfParallelism = thread_num } //System.Environment.ProcessorCount}
+            ,kk => {
                
                     if (kk < x.Length)
                     {
@@ -67,7 +68,8 @@ namespace DigitalMusicAnalysis
 
             int cols = 2 * nearest /wSamp;
             Parallel.For(0, wSamp / 2, new ParallelOptions()
-            { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, jj =>
+            { MaxDegreeOfParallelism = thread_num } //System.Environment.ProcessorCount}
+            ,jj =>
             //for (int jj = 0; jj < wSamp / 2; jj++)
             {
                 timeFreqData[jj] = new float[cols];
@@ -130,6 +132,7 @@ namespace DigitalMusicAnalysis
             return Y;
         }
         // new class
+        
         public Complex[] fft(Complex[] x)
         {
             int ii = 0;
@@ -150,9 +153,9 @@ namespace DigitalMusicAnalysis
                 Complex[] O = new Complex[N/2];
                 Complex[] even = new Complex[N/2];
                 Complex[] odd = new Complex[N/2];
-                /*Parallel.For( 0,N, new ParallelOptions()
-                { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, ii =>
-                */
+                //Parallel.For( 0,N, new ParallelOptions()
+                //{ MaxDegreeOfParallelism = System.Environment.ProcessorCount }, ii =>
+                
                 for (ii = 0; ii < N; ii++)
                 {
 
@@ -169,9 +172,9 @@ namespace DigitalMusicAnalysis
 
                 E = fft(even);
                 O = fft(odd);
-                /*Parallel.For(0,N, new ParallelOptions()
-                { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, kk =>
-                */
+                //Parallel.For(0,N, new ParallelOptions()
+                //{ MaxDegreeOfParallelism = System.Environment.ProcessorCount }, kk =>
+                
                 for (kk = 0; kk < N; kk++)
                 {
                     Y[kk] = E[(kk % (N / 2))] + O[(kk % (N / 2))] * twiddles[kk * wSamp / N];
@@ -181,7 +184,7 @@ namespace DigitalMusicAnalysis
 
            return Y;
         }
-
+        
        
         
     }

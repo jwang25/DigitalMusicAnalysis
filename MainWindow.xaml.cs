@@ -31,6 +31,7 @@ namespace DigitalMusicAnalysis
         private double bpm = 70;
         const int thread_num = 4;
         Stopwatch stopwatch = new Stopwatch();
+        // FFT fft = new FFT();
         public MainWindow()
         {
 
@@ -269,24 +270,24 @@ namespace DigitalMusicAnalysis
 
         private void freqDomain()
         {
+
             stftRep = new timefreq(waveIn.wave, 2048); // takes the input wavefile 
             pixelArray = new float[stftRep.timeFreqData[0].Length * stftRep.wSamp / 2];
             Parallel.For(0, stftRep.wSamp / 2, new ParallelOptions()
-            { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, jj =>
-            
+            { MaxDegreeOfParallelism = thread_num } //System.Environment.ProcessorCount}
+            , jj =>
 
-
-           // for (int jj = 0; jj < stftRep.wSamp / 2; jj++)
-            {
-                for (int ii = 0; ii < stftRep.timeFreqData[0].Length; ii++)
-                {
+             // for (int jj = 0; jj < stftRep.wSamp / 2; jj++)
+             {
+                 for (int ii = 0; ii < stftRep.timeFreqData[0].Length; ii++)
+                 {
                     // turn to visualization
                     pixelArray[jj * stftRep.timeFreqData[0].Length + ii] = stftRep.timeFreqData[jj][ii];
-                }
-            }
-        
-        );
-    
+                 }
+             }
+
+            );
+
         }
 
         // Onset Detection function - Determines Start and Finish times of a note and the frequency of the note over each duration.
@@ -319,7 +320,8 @@ namespace DigitalMusicAnalysis
             HFC = new float[stftRep.timeFreqData[0].Length];
             //parallel
             Parallel.For(0, stftRep.timeFreqData[0].Length, new ParallelOptions()
-            {MaxDegreeOfParallelism = System.Environment.ProcessorCount},jj=>
+            { MaxDegreeOfParallelism = thread_num }, //System.Environment.ProcessorCount}
+            jj =>
             //for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
                 {
                     for (int ii = 0; ii < stftRep.wSamp / 2; ii++)
@@ -327,7 +329,7 @@ namespace DigitalMusicAnalysis
                         HFC[jj] = HFC[jj] + (float)Math.Pow((double)stftRep.timeFreqData[ii][jj] * ii, 2);
                     }
 
-               }
+                }
            );
 
             float maxi = HFC.Max();
@@ -337,7 +339,7 @@ namespace DigitalMusicAnalysis
                 HFC[jj] = (float)Math.Pow((HFC[jj] / maxi), 2);
             }
             //Parallel.For(0, stftRep.timeFreqData[0].Length,new ParallelOptions()
-            //{ MaxDegreeOfParallelism=System.Environment.ProcessorCount},jj=>
+            //{ MaxDegreeOfParallelism = thread_num },jj=>
             for (int jj = 0; jj < stftRep.timeFreqData[0].Length; jj++)
             {
                 if (starts > stops)
@@ -357,6 +359,7 @@ namespace DigitalMusicAnalysis
                     }
 
                 }
+                //}
             }
             //);
 
@@ -399,7 +402,8 @@ namespace DigitalMusicAnalysis
                 }
 
                 Y = new Complex[nearest];
-             
+                //FFT fft = new FFT();
+                //fft.twiddles = new Complex[nearest];
                 Y = fft(compX, nearest);
 
                 absY = new double[nearest];
@@ -478,8 +482,8 @@ namespace DigitalMusicAnalysis
             int staffCount = 0;
             int noteCount = 0;
 
-           // Parallel.For(0, alignedStrings[0].Length / 2 , new ParallelOptions()
-            //{ MaxDegreeOfParallelism = System.Environment.ProcessorCount },ii =>
+            //Parallel.For(0, alignedStrings[0].Length / 2 , new ParallelOptions()
+            //{ MaxDegreeOfParallelism = thread_num },ii =>
             for (int ii = 0; ii < alignedStrings[0].Length / 2; ii++)
             {
 
@@ -502,463 +506,490 @@ namespace DigitalMusicAnalysis
                     alignedNoteArray[ii] = noteArray[noteCount];
                     noteCount++;
                 }
+                //}
+                //);
             }
-           // );
+                // STAFF TAB DISPLAY
 
-            // STAFF TAB DISPLAY
+                Ellipse[] notes;
+                Line[] stems;
+                notes = new Ellipse[alignedNoteArray.Length];
+                stems = new Line[alignedNoteArray.Length];
+                SolidColorBrush myBrush = new SolidColorBrush(Colors.Green);
 
-            Ellipse[] notes;
-            Line[] stems;
-            notes = new Ellipse[alignedNoteArray.Length];
-            stems = new Line[alignedNoteArray.Length];
-            SolidColorBrush myBrush = new SolidColorBrush(Colors.Green);
+                RotateTransform rotate = new RotateTransform(45);
 
-            RotateTransform rotate = new RotateTransform(45);
-
-            for (int ii = 0; ii < alignedNoteArray.Length; ii++)
-            {
-                //noteArray[ii] = new musicNote(pitches[ii], lengths[ii]);
-                //System.Console.Out.Write("Note " + (ii + 1) + ": \nDuration: " + noteArray[ii].duration / waveIn.SampleRate + " seconds \nPitch: " + Enum.GetName(typeof(musicNote.notePitch), (noteArray[ii].pitch) % 12) + " / " + pitches[ii] + "\nError: " + noteArray[ii].error * 100 + "%\n");
-                notes[ii] = new Ellipse();
-                notes[ii].Tag = alignedNoteArray[ii];
-                notes[ii].Height = 20;
-                notes[ii].Width = 15;
-                notes[ii].Margin = new Thickness(ii * 30, 0, 0, 0);
-                notes[ii].LayoutTransform = rotate;
-                notes[ii].MouseEnter += DisplayStats;
-                notes[ii].MouseLeave += ClearStats;
-                stems[ii] = new Line();
-                stems[ii].StrokeThickness = 1;
-                stems[ii].X1 = ii * 30 + 20;
-                stems[ii].X2 = ii * 30 + 20;
-                stems[ii].Y1 = 250 - 10 * alignedNoteArray[ii].staffPos;
-                stems[ii].Y2 = 250 - 10 * alignedNoteArray[ii].staffPos - 40;
-                notes[ii].Fill = ErrorBrush;
-                notes[ii].StrokeThickness = 1;
-                stems[ii].Stroke = ErrorBrush;
-
-
-                Canvas.SetTop(notes[ii], (240 - 10 * alignedNoteArray[ii].staffPos));
-                if (alignedNoteArray[ii].flat)
+                for (int ii = 0; ii < alignedNoteArray.Length; ii++)
                 {
-                    System.Windows.Controls.Label flat = new System.Windows.Controls.Label();
-                    flat.Content = "b";
-                    flat.FontFamily = new FontFamily("Mistral");
-                    flat.Margin = new Thickness(ii * 30 + 15, 0, 0, 0);
-                    Canvas.SetTop(flat, (240 - 10 * alignedNoteArray[ii].staffPos));
-                    noteStaff.Children.Insert(ii, flat);
+                    //noteArray[ii] = new musicNote(pitches[ii], lengths[ii]);
+                    //System.Console.Out.Write("Note " + (ii + 1) + ": \nDuration: " + noteArray[ii].duration / waveIn.SampleRate + " seconds \nPitch: " + Enum.GetName(typeof(musicNote.notePitch), (noteArray[ii].pitch) % 12) + " / " + pitches[ii] + "\nError: " + noteArray[ii].error * 100 + "%\n");
+                    notes[ii] = new Ellipse();
+                    notes[ii].Tag = alignedNoteArray[ii];
+                    notes[ii].Height = 20;
+                    notes[ii].Width = 15;
+                    notes[ii].Margin = new Thickness(ii * 30, 0, 0, 0);
+                    notes[ii].LayoutTransform = rotate;
+                    notes[ii].MouseEnter += DisplayStats;
+                    notes[ii].MouseLeave += ClearStats;
+                    stems[ii] = new Line();
+                    stems[ii].StrokeThickness = 1;
+                    stems[ii].X1 = ii * 30 + 20;
+                    stems[ii].X2 = ii * 30 + 20;
+                    stems[ii].Y1 = 250 - 10 * alignedNoteArray[ii].staffPos;
+                    stems[ii].Y2 = 250 - 10 * alignedNoteArray[ii].staffPos - 40;
+                    notes[ii].Fill = ErrorBrush;
+                    notes[ii].StrokeThickness = 1;
+                    stems[ii].Stroke = ErrorBrush;
+
+
+                    Canvas.SetTop(notes[ii], (240 - 10 * alignedNoteArray[ii].staffPos));
+                    if (alignedNoteArray[ii].flat)
+                    {
+                        System.Windows.Controls.Label flat = new System.Windows.Controls.Label();
+                        flat.Content = "b";
+                        flat.FontFamily = new FontFamily("Mistral");
+                        flat.Margin = new Thickness(ii * 30 + 15, 0, 0, 0);
+                        Canvas.SetTop(flat, (240 - 10 * alignedNoteArray[ii].staffPos));
+                        noteStaff.Children.Insert(ii, flat);
+                    }
+
+                    noteStaff.Children.Insert(ii, notes[ii]);
+                    noteStaff.Children.Insert(ii, stems[ii]);
+
                 }
 
-                noteStaff.Children.Insert(ii, notes[ii]);
-                noteStaff.Children.Insert(ii, stems[ii]);
+                Ellipse[] sheetNotes;
+                Rectangle[] timeRect;
+                Line[] sheetStems;
+                sheetNotes = new Ellipse[alignedStaffArray.Length];
+                sheetStems = new Line[alignedStaffArray.Length];
+                timeRect = new Rectangle[2 * alignedStaffArray.Length];
 
-            }
-
-            Ellipse[] sheetNotes;
-            Rectangle[] timeRect;
-            Line[] sheetStems;
-            sheetNotes = new Ellipse[alignedStaffArray.Length];
-            sheetStems = new Line[alignedStaffArray.Length];
-            timeRect = new Rectangle[2 * alignedStaffArray.Length];
-
-            Fline.Width = alignedStaffArray.Length * 30;
-            Dline.Width = alignedStaffArray.Length * 30;
-            Bline.Width = alignedStaffArray.Length * 30;
-            Gline.Width = alignedStaffArray.Length * 30;
-            Eline.Width = alignedStaffArray.Length * 30;
-            noteStaff.Width = alignedStaffArray.Length * 30;
+                Fline.Width = alignedStaffArray.Length * 30;
+                Dline.Width = alignedStaffArray.Length * 30;
+                Bline.Width = alignedStaffArray.Length * 30;
+                Gline.Width = alignedStaffArray.Length * 30;
+                Eline.Width = alignedStaffArray.Length * 30;
+                noteStaff.Width = alignedStaffArray.Length * 30;
 
 
-            for (int ii = 0; ii < alignedStaffArray.Length; ii++)
-            {
-
-                sheetNotes[ii] = new Ellipse();
-                sheetNotes[ii].Tag = alignedStaffArray[ii];
-                sheetNotes[ii].Height = 20;
-                sheetNotes[ii].Width = 15;
-                sheetNotes[ii].Margin = new Thickness(ii * 30, 0, 0, 0);
-                sheetNotes[ii].LayoutTransform = rotate;
-                sheetNotes[ii].MouseEnter += DisplayStats;
-                sheetNotes[ii].MouseLeave += ClearStats;
-                sheetStems[ii] = new Line();
-                sheetStems[ii].StrokeThickness = 1;
-                sheetStems[ii].X1 = ii * 30 + 20;
-                sheetStems[ii].X2 = ii * 30 + 20;
-                sheetStems[ii].Y1 = 250 - 10 * alignedStaffArray[ii].staffPos;
-                sheetStems[ii].Y2 = 250 - 10 * alignedStaffArray[ii].staffPos - 40;
-
-                sheetNotes[ii].Fill = sheetBrush;
-                sheetNotes[ii].StrokeThickness = 1;
-                sheetStems[ii].Stroke = sheetBrush;
-
-
-                Canvas.SetTop(sheetNotes[ii], (240 - 10 * alignedStaffArray[ii].staffPos));
-                if (alignedStaffArray[ii].flat)
+                for (int ii = 0; ii < alignedStaffArray.Length; ii++)
                 {
-                    System.Windows.Controls.Label flat = new System.Windows.Controls.Label();
-                    flat.Content = "b";
-                    flat.FontFamily = new FontFamily("Mistral");
-                    flat.Margin = new Thickness(ii * 30 + 15, 0, 0, 0);
-                    Canvas.SetTop(flat, (240 - 10 * alignedStaffArray[ii].staffPos));
-                    noteStaff.Children.Insert(ii, flat);
+
+                    sheetNotes[ii] = new Ellipse();
+                    sheetNotes[ii].Tag = alignedStaffArray[ii];
+                    sheetNotes[ii].Height = 20;
+                    sheetNotes[ii].Width = 15;
+                    sheetNotes[ii].Margin = new Thickness(ii * 30, 0, 0, 0);
+                    sheetNotes[ii].LayoutTransform = rotate;
+                    sheetNotes[ii].MouseEnter += DisplayStats;
+                    sheetNotes[ii].MouseLeave += ClearStats;
+                    sheetStems[ii] = new Line();
+                    sheetStems[ii].StrokeThickness = 1;
+                    sheetStems[ii].X1 = ii * 30 + 20;
+                    sheetStems[ii].X2 = ii * 30 + 20;
+                    sheetStems[ii].Y1 = 250 - 10 * alignedStaffArray[ii].staffPos;
+                    sheetStems[ii].Y2 = 250 - 10 * alignedStaffArray[ii].staffPos - 40;
+
+                    sheetNotes[ii].Fill = sheetBrush;
+                    sheetNotes[ii].StrokeThickness = 1;
+                    sheetStems[ii].Stroke = sheetBrush;
+
+
+                    Canvas.SetTop(sheetNotes[ii], (240 - 10 * alignedStaffArray[ii].staffPos));
+                    if (alignedStaffArray[ii].flat)
+                    {
+                        System.Windows.Controls.Label flat = new System.Windows.Controls.Label();
+                        flat.Content = "b";
+                        flat.FontFamily = new FontFamily("Mistral");
+                        flat.Margin = new Thickness(ii * 30 + 15, 0, 0, 0);
+                        Canvas.SetTop(flat, (240 - 10 * alignedStaffArray[ii].staffPos));
+                        noteStaff.Children.Insert(ii, flat);
+                    }
+                    noteStaff.Children.Insert(ii, sheetNotes[ii]);
+                    noteStaff.Children.Insert(ii, sheetStems[ii]);
                 }
-                noteStaff.Children.Insert(ii, sheetNotes[ii]);
-                noteStaff.Children.Insert(ii, sheetStems[ii]);
+
+                // FOR TIMING ERROR RECTANGLES
+
+                for (int ii = 0; ii < alignedStaffArray.Length; ii++)
+                {
+
+                    timeRect[ii] = new Rectangle();
+                    timeRect[ii].Fill = sheetBrush;
+                    timeRect[ii].Height = 10 * alignedStaffArray[ii].duration * 4 * bpm / (60 * waveIn.SampleRate);
+                    timeRect[ii].Width = 15;
+                    timeRect[ii].Margin = new Thickness(ii * 30 + 5, 0, 0, 0);
+
+                    Canvas.SetTop(timeRect[ii], 200);
+
+                    noteStaff.Children.Insert(ii, timeRect[ii]);
+
+                }
+
+                for (int ii = alignedStaffArray.Length; ii < alignedStaffArray.Length + alignedNoteArray.Length; ii++)
+                {
+
+                    timeRect[ii] = new Rectangle();
+                    timeRect[ii].Fill = ErrorBrush;
+                    timeRect[ii].Height = 10 * alignedNoteArray[ii - alignedStaffArray.Length].duration * 4 * bpm / (60 * waveIn.SampleRate);
+                    timeRect[ii].Width = 10;
+                    timeRect[ii].Margin = new Thickness((ii - alignedStaffArray.Length) * 30 + 5, 0, 0, 0);
+
+                    Canvas.SetTop(timeRect[ii], 200);
+                    noteStaff.Children.Insert(ii, timeRect[ii]);
+                }
+
+
             }
 
-            // FOR TIMING ERROR RECTANGLES
-
-            for (int ii = 0; ii < alignedStaffArray.Length; ii++)
+            private void DisplayStats(object sender, System.Windows.Input.MouseEventArgs e)
             {
+                Ellipse note = (Ellipse)sender;
+                musicNote details = (musicNote)note.Tag;
 
-                timeRect[ii] = new Rectangle();
-                timeRect[ii].Fill = sheetBrush;
-                timeRect[ii].Height = 10 * alignedStaffArray[ii].duration * 4 * bpm / (60 * waveIn.SampleRate);
-                timeRect[ii].Width = 15;
-                timeRect[ii].Margin = new Thickness(ii * 30 + 5, 0, 0, 0);
-
-                Canvas.SetTop(timeRect[ii], 200);
-
-                noteStaff.Children.Insert(ii, timeRect[ii]);
-
+                NoteStatsP.Text = Enum.GetName(typeof(musicNote.notePitch), (details.pitch) % 12);
+                NoteStatsF.Text = details.frequency.ToString();
+                NoteStatsE.Text = (details.error * 100).ToString() + "%";
+                if (details.error > 0.2)
+                    Comments.Text = "Too sharp";
+                else if (details.error < -0.2)
+                    Comments.Text = "Too flat";
+                else
+                    Comments.Text = "";
             }
 
-            for (int ii = alignedStaffArray.Length; ii < alignedStaffArray.Length + alignedNoteArray.Length; ii++)
+            private void ClearStats(object sender, System.Windows.Input.MouseEventArgs e)
             {
-
-                timeRect[ii] = new Rectangle();
-                timeRect[ii].Fill = ErrorBrush;
-                timeRect[ii].Height = 10 * alignedNoteArray[ii - alignedStaffArray.Length].duration * 4 * bpm / (60 * waveIn.SampleRate);
-                timeRect[ii].Width = 10;
-                timeRect[ii].Margin = new Thickness((ii - alignedStaffArray.Length) * 30 + 5, 0, 0, 0);
-
-                Canvas.SetTop(timeRect[ii], 200);
-                noteStaff.Children.Insert(ii, timeRect[ii]);
-            }
-
-
-        }
-
-        private void DisplayStats(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            Ellipse note = (Ellipse)sender;
-            musicNote details = (musicNote)note.Tag;
-
-            NoteStatsP.Text = Enum.GetName(typeof(musicNote.notePitch), (details.pitch) % 12);
-            NoteStatsF.Text = details.frequency.ToString();
-            NoteStatsE.Text = (details.error * 100).ToString() + "%";
-            if (details.error > 0.2)
-                Comments.Text = "Too sharp";
-            else if (details.error < -0.2)
-                Comments.Text = "Too flat";
-            else
+                NoteStatsP.Text = "";
+                NoteStatsF.Text = "";
+                NoteStatsE.Text = "";
                 Comments.Text = "";
-        }
-
-        private void ClearStats(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            NoteStatsP.Text = "";
-            NoteStatsF.Text = "";
-            NoteStatsE.Text = "";
-            Comments.Text = "";
-        }
+            }
 
 
-        // Updates Histogram values in tab 2 - Octifs
+            // Updates Histogram values in tab 2 - Octifs
 
-        private void updateHistogram(object sender, RoutedEventArgs e)
-        {
-            LowestOctif.Children.Clear();
-            LowOctif.Children.Clear();
-            MiddleOctif.Children.Clear();
-            HighOctif.Children.Clear();
-            HighestOctif.Children.Clear();
-
-            loadHistogram();
-
-        }
-
-        // Sets up and plays music file that was read in
-
-        private void playBack()
-        {
-            playback = new WaveOut();
-            playback.Init(waveReader);
-            playback.Play();
-        }
-
-        // Updating thread - Gets position in music file, uses it as slider value.
-
-        private void updateSlider()
-        {
-
-            while (playback.GetPosition() < waveIn.data.Length)
+            private void updateHistogram(object sender, RoutedEventArgs e)
             {
-                slider1.Dispatcher.BeginInvoke(new Action(delegate ()
-                {
-                    slider1.Value = Math.Floor((double)playback.GetPosition() / 1024);
-                }));
+                LowestOctif.Children.Clear();
+                LowOctif.Children.Clear();
+                MiddleOctif.Children.Clear();
+                HighOctif.Children.Clear();
+                HighestOctif.Children.Clear();
 
-                System.Threading.Thread.Sleep(100);
+                loadHistogram();
 
             }
-            playback.Stop();
-        }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
+            // Sets up and plays music file that was read in
 
-        }
-
-        // Slider Update Button 1 - -1
-
-        private void button3_Click(object sender, RoutedEventArgs e)
-        {
-            slider1.Value--;
-        }
-
-        // Slider Update Button 2 - +1
-
-        private void button4_Click(object sender, RoutedEventArgs e)
-        {
-            slider1.Value++;
-        }
-
-        // Replay sound file - File -> Replay
-
-        private void replay(object sender, RoutedEventArgs e)
-        {
-            slider1.Value = 0;
-            loadWave(filename);
-            playBack();
-        }
-
-        private void closeMusic(object sender, EventArgs e)
-        {
-            playback.Dispose();
-        }
-
-        // FFT function for Pitch Detection
-        // possible to parallel
-        private Complex[] fft(Complex[] x, int L)
-        {
-            int ii = 0;
-            int kk = 0;
-            int N = x.Length;
-
-            Complex[] Y = new Complex[N];
-
-            if (N == 1)
+            private void playBack()
             {
-                Y[0] = x[0];
+                playback = new WaveOut();
+                playback.Init(waveReader);
+                playback.Play();
             }
-            else
+
+            // Updating thread - Gets position in music file, uses it as slider value.
+
+            private void updateSlider()
             {
 
-                Complex[] E = new Complex[N / 2];
-                Complex[] O = new Complex[N / 2];
-                Complex[] even = new Complex[N / 2];
-                Complex[] odd = new Complex[N / 2];
-
-                for (ii = 0; ii < N; ii++)
+                while (playback.GetPosition() < waveIn.data.Length)
                 {
+                    slider1.Dispatcher.BeginInvoke(new Action(delegate ()
+                    {
+                        slider1.Value = Math.Floor((double)playback.GetPosition() / 1024);
+                    }));
 
-                    if (ii % 2 == 0)
-                    {
-                        even[ii / 2] = x[ii];
-                    }
-                    if (ii % 2 == 1)
-                    {
-                        odd[(ii - 1) / 2] = x[ii];
-                    }
+                    System.Threading.Thread.Sleep(100);
+
                 }
+                playback.Stop();
+            }
 
-                E = fft(even, L);
-                O = fft(odd, L);
+            private void Window_Loaded(object sender, RoutedEventArgs e)
+            {
 
-                for (kk = 0; kk < N; kk++)
+            }
+
+            // Slider Update Button 1 - -1
+
+            private void button3_Click(object sender, RoutedEventArgs e)
+            {
+                slider1.Value--;
+            }
+
+            // Slider Update Button 2 - +1
+
+            private void button4_Click(object sender, RoutedEventArgs e)
+            {
+                slider1.Value++;
+            }
+
+            // Replay sound file - File -> Replay
+
+            private void replay(object sender, RoutedEventArgs e)
+            {
+                slider1.Value = 0;
+                loadWave(filename);
+                playBack();
+            }
+
+            private void closeMusic(object sender, EventArgs e)
+            {
+                playback.Dispose();
+            }
+
+            // FFT function for Pitch Detection
+            // possible to parallel
+
+            private Complex[] fft(Complex[] x, int L)
+            {
+                int ii = 0;
+                int kk = 0;
+                int N = x.Length;
+
+                Complex[] Y = new Complex[N];
+
+                if (N == 1)
                 {
-                    Y[kk] = E[(kk % (N / 2))] + O[(kk % (N / 2))] * twiddles[kk * (L / N)];
+                    Y[0] = x[0];
                 }
-            }
-
-            return Y;
-        }
-
-        private musicNote[] readXML(string filename)
-        {
-
-            List<string> stepList = new List<string>(100);
-            List<int> octaveList = new List<int>(100);
-            List<int> durationList = new List<int>(100);
-            List<int> alterList = new List<int>(100);
-            int noteCount = 0;
-            bool sharp;
-            musicNote[] scoreArray;
-
-            FileStream file = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            if (file == null)
-            {
-                System.Console.Write("Failed to Open File!");
-            }
-
-            XmlTextReader reader = new XmlTextReader(filename);
-
-            bool finished = false;
-
-            while (finished == false)
-            {
-                sharp = false;
-                while ((!reader.Name.Equals("note") || reader.NodeType == XmlNodeType.EndElement) && !finished)
+                else
                 {
-                    reader.Read();
-                    if (reader.ReadState == ReadState.EndOfFile)
+
+                    Complex[] E = new Complex[N / 2];
+                    Complex[] O = new Complex[N / 2];
+                    Complex[] even = new Complex[N / 2];
+                    Complex[] odd = new Complex[N / 2];
+
+                    for (ii = 0; ii < N; ii++)
                     {
-                        finished = true;
+
+                        if (ii % 2 == 0)
+                        {
+                            even[ii / 2] = x[ii];
+                        }
+                        if (ii % 2 == 1)
+                        {
+                            odd[(ii - 1) / 2] = x[ii];
+                        }
+                    }
+
+                    E = fft(even, L);
+                    O = fft(odd, L);
+
+                    for (kk = 0; kk < N; kk++)
+                    {
+                        Y[kk] = E[(kk % (N / 2))] + O[(kk % (N / 2))] * twiddles[kk * (L / N)];
                     }
                 }
 
-                reader.Read();
-                reader.Read();
-                if (reader.Name.Equals("rest"))
-                {
-                }
-                else if (reader.Name.Equals("pitch"))
-                {
+                return Y;
+            }
 
-                    while (!reader.Name.Equals("step"))
+            private musicNote[] readXML(string filename)
+            {
+
+                List<string> stepList = new List<string>(100);
+                List<int> octaveList = new List<int>(100);
+                List<int> durationList = new List<int>(100);
+                List<int> alterList = new List<int>(100);
+                int noteCount = 0;
+                bool sharp;
+                musicNote[] scoreArray;
+
+                FileStream file = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                if (file == null)
+                {
+                    System.Console.Write("Failed to Open File!");
+                }
+
+                XmlTextReader reader = new XmlTextReader(filename);
+
+                bool finished = false;
+
+                while (finished == false)
+                {
+                    sharp = false;
+                    while ((!reader.Name.Equals("note") || reader.NodeType == XmlNodeType.EndElement) && !finished)
                     {
                         reader.Read();
+                        if (reader.ReadState == ReadState.EndOfFile)
+                        {
+                            finished = true;
+                        }
                     }
+
                     reader.Read();
-                    stepList.Add(reader.Value);
-                    while (!reader.Name.Equals("octave"))
+                    reader.Read();
+                    if (reader.Name.Equals("rest"))
                     {
-                        if (reader.Name.Equals("alter") && reader.NodeType == XmlNodeType.Element)
+                    }
+                    else if (reader.Name.Equals("pitch"))
+                    {
+
+                        while (!reader.Name.Equals("step"))
                         {
                             reader.Read();
-                            alterList.Add(int.Parse(reader.Value));
-                            sharp = true;
                         }
                         reader.Read();
-                    }
-                    reader.Read();
-                    if (!sharp)
-                    {
-                        alterList.Add(0);
-                    }
-                    sharp = false;
-                    octaveList.Add(int.Parse(reader.Value));
-                    while (!reader.Name.Equals("duration"))
-                    {
+                        stepList.Add(reader.Value);
+                        while (!reader.Name.Equals("octave"))
+                        {
+                            if (reader.Name.Equals("alter") && reader.NodeType == XmlNodeType.Element)
+                            {
+                                reader.Read();
+                                alterList.Add(int.Parse(reader.Value));
+                                sharp = true;
+                            }
+                            reader.Read();
+                        }
                         reader.Read();
+                        if (!sharp)
+                        {
+                            alterList.Add(0);
+                        }
+                        sharp = false;
+                        octaveList.Add(int.Parse(reader.Value));
+                        while (!reader.Name.Equals("duration"))
+                        {
+                            reader.Read();
+                        }
+                        reader.Read();
+                        durationList.Add(int.Parse(reader.Value));
+                        //System.Console.Out.Write("Note ~ Pitch: " + stepList[noteCount] + alterList[noteCount] + " Octave: " + octaveList[noteCount] + " Duration: " + durationList[noteCount] + "\n");
+                        noteCount++;
+
                     }
-                    reader.Read();
-                    durationList.Add(int.Parse(reader.Value));
-                    //System.Console.Out.Write("Note ~ Pitch: " + stepList[noteCount] + alterList[noteCount] + " Octave: " + octaveList[noteCount] + " Duration: " + durationList[noteCount] + "\n");
-                    noteCount++;
 
                 }
 
-            }
+                scoreArray = new musicNote[noteCount];
 
-            scoreArray = new musicNote[noteCount];
+                double c0 = 16.351625;
 
-            double c0 = 16.351625;
-
-            for (int nn = 0; nn < noteCount; nn++)
-            {
-                int step = (int)Enum.Parse(typeof(pitchConv), stepList[nn]);
-
-                double freq = c0 * Math.Pow(2, octaveList[nn]) * (Math.Pow(2, ((double)step + (double)alterList[nn]) / 12));
-                scoreArray[nn] = new musicNote(freq, (double)durationList[nn] * 60 * waveIn.SampleRate / (4 * bpm));
-
-            }
-
-            return scoreArray;
-        }
-        //stop watch
-        private string[] stringMatch(string A, string B)
-        {
-            // SETUP SIMILARITY MATRIX
-            int[][] S = new int[12][];
-
-            for (int i = 0; i < 12; i++)
-            {
-                S[i] = new int[12];
-            }
-
-            for (int i = 0; i < 12; i++)
-            {
-                for (int j = i; j < 12; j++)
+                for (int nn = 0; nn < noteCount; nn++)
                 {
-                    if (i == j)
-                        S[i][j] = 10;
-                    else
-                        S[i][j] = -Math.Abs(i - j);
+                    int step = (int)Enum.Parse(typeof(pitchConv), stepList[nn]);
+
+                    double freq = c0 * Math.Pow(2, octaveList[nn]) * (Math.Pow(2, ((double)step + (double)alterList[nn]) / 12));
+                    scoreArray[nn] = new musicNote(freq, (double)durationList[nn] * 60 * waveIn.SampleRate / (4 * bpm));
+
                 }
+
+                return scoreArray;
             }
-
-            //GAP PENALTY
-
-            int d = -10;
-
-            int[][] F = new int[A.Length + 1][];
-
-            for (int i = 0; i < A.Length + 1; i++)
+            //stop watch
+            private string[] stringMatch(string A, string B)
             {
-                F[i] = new int[B.Length + 1];
-            }
+                // SETUP SIMILARITY MATRIX
+                int[][] S = new int[12][];
 
-            for (int j = 0; j < B.Length + 1; j++)
-            {
-                F[0][j] = d * j;
-            }
-
-            for (int i = 0; i < A.Length + 1; i++)
-            {
-                F[i][0] = d * i;
-            }
-
-            for (int i = 1; i < A.Length + 1; i++)
-            {
-                for (int j = 1; j < B.Length + 1; j++)
+                for (int i = 0; i < 12; i++)
                 {
-                    int Ai = (int)A[i - 1] - 65;//parseChar(A[i - 1]);
-                    int Bj = (int)B[j - 1] - 65;// parseChar(B[j - 1]);
-
-                    F[i][j] = Math.Max(Math.Max((F[i - 1][j - 1] + S[Ai][Bj]), (F[i][j - 1] + d)), (F[i - 1][j] + d));
+                    S[i] = new int[12];
                 }
-            }
 
-            string AlignA = "";
-            string AlignB = "";
+                for (int i = 0; i < 12; i++)
+                {
+                    for (int j = i; j < 12; j++)
+                    {
+                        if (i == j)
+                            S[i][j] = 10;
+                        else
+                            S[i][j] = -Math.Abs(i - j);
+                    }
+                }
 
-            int ii = (A.Length);
-            int jj = (B.Length);
+                //GAP PENALTY
 
-            while (ii > 0 && jj > 0)
-            {
+                int d = -10;
 
-                int Score = F[ii][jj];
-                int ScoreDiag = F[ii - 1][jj - 1];
-                int ScoreUp = F[ii][jj - 1];
-                int ScoreLeft = F[ii - 1][jj];
+                int[][] F = new int[A.Length + 1][];
 
-                int Ai = (int)(A[ii - 1]) - 65;
-                int Bj = (int)(B[jj - 1]) - 65;
+                for (int i = 0; i < A.Length + 1; i++)
+                {
+                    F[i] = new int[B.Length + 1];
+                }
 
-                if (Score == ScoreDiag + S[Ai][Bj])
+                for (int j = 0; j < B.Length + 1; j++)
+                {
+                    F[0][j] = d * j;
+                }
+
+                for (int i = 0; i < A.Length + 1; i++)
+                {
+                    F[i][0] = d * i;
+                }
+
+                for (int i = 1; i < A.Length + 1; i++)
+                {
+                    for (int j = 1; j < B.Length + 1; j++)
+                    {
+                        int Ai = (int)A[i - 1] - 65;//parseChar(A[i - 1]);
+                        int Bj = (int)B[j - 1] - 65;// parseChar(B[j - 1]);
+
+                        F[i][j] = Math.Max(Math.Max((F[i - 1][j - 1] + S[Ai][Bj]), (F[i][j - 1] + d)), (F[i - 1][j] + d));
+                    }
+                }
+
+                string AlignA = "";
+                string AlignB = "";
+
+                int ii = (A.Length);
+                int jj = (B.Length);
+
+                while (ii > 0 && jj > 0)
+                {
+
+                    int Score = F[ii][jj];
+                    int ScoreDiag = F[ii - 1][jj - 1];
+                    int ScoreUp = F[ii][jj - 1];
+                    int ScoreLeft = F[ii - 1][jj];
+
+                    int Ai = (int)(A[ii - 1]) - 65;
+                    int Bj = (int)(B[jj - 1]) - 65;
+
+                    if (Score == ScoreDiag + S[Ai][Bj])
+                    {
+                        AlignA = A[ii - 1] + AlignA;
+                        AlignB = B[jj - 1] + AlignB;
+
+                        ii = ii - 1;
+                        jj = jj - 1;
+
+                    }
+
+                    else if (Score == ScoreUp + d)
+                    {
+                        AlignA = "-" + AlignA;
+                        AlignB = B[jj - 1] + AlignB;
+
+                        jj = jj - 1;
+                    }
+
+                    else if (Score == ScoreLeft + d)
+                    {
+                        AlignA = A[ii - 1] + AlignA;
+                        AlignB = "-" + AlignB;
+
+                        ii = ii - 1;
+
+                    }
+                }
+
+                while (ii > 0)
                 {
                     AlignA = A[ii - 1] + AlignA;
-                    AlignB = B[jj - 1] + AlignB;
+                    AlignB = "-" + AlignB;
 
                     ii = ii - 1;
-                    jj = jj - 1;
-
                 }
 
-                else if (Score == ScoreUp + d)
+                while (jj > 0)
                 {
                     AlignA = "-" + AlignA;
                     AlignB = B[jj - 1] + AlignB;
@@ -966,133 +997,133 @@ namespace DigitalMusicAnalysis
                     jj = jj - 1;
                 }
 
-                else if (Score == ScoreLeft + d)
+                System.Console.Out.Write("Original:   " + A + "\n");
+                System.Console.Out.Write("New String: " + B + "\n\n");
+                System.Console.Out.Write("Optimal Alignment: \n\n");
+                System.Console.Out.Write(AlignA + "\n");
+                System.Console.Out.Write(AlignB + "\n");
+
+                string[] returnArray = new string[2];
+
+                returnArray[0] = AlignA;
+                returnArray[1] = AlignB;
+
+                return returnArray;
+
+
+            }
+
+            private string[] stringMatch(int[] A, int[] B)
+            {
+                // SETUP SIMILARITY MATRIX
+                int[][] S = new int[12][];
+
+                for (int i = 0; i < 12; i++)
                 {
-                    AlignA = A[ii - 1] + AlignA;
-                    AlignB = "-" + AlignB;
-
-                    ii = ii - 1;
-
+                    S[i] = new int[12];
                 }
-            }
 
-            while (ii > 0)
-            {
-                AlignA = A[ii - 1] + AlignA;
-                AlignB = "-" + AlignB;
-
-                ii = ii - 1;
-            }
-
-            while (jj > 0)
-            {
-                AlignA = "-" + AlignA;
-                AlignB = B[jj - 1] + AlignB;
-
-                jj = jj - 1;
-            }
-
-            System.Console.Out.Write("Original:   " + A + "\n");
-            System.Console.Out.Write("New String: " + B + "\n\n");
-            System.Console.Out.Write("Optimal Alignment: \n\n");
-            System.Console.Out.Write(AlignA + "\n");
-            System.Console.Out.Write(AlignB + "\n");
-
-            string[] returnArray = new string[2];
-
-            returnArray[0] = AlignA;
-            returnArray[1] = AlignB;
-
-            return returnArray;
-
-
-        }
-
-        private string[] stringMatch(int[] A, int[] B)
-        {
-            // SETUP SIMILARITY MATRIX
-            int[][] S = new int[12][];
-
-            for (int i = 0; i < 12; i++)
-            {
-                S[i] = new int[12];
-            }
-
-            for (int i = 0; i < 12; i++)
-            {
-                for (int j = i; j < 12; j++)
+                for (int i = 0; i < 12; i++)
                 {
-                    if (i == j)
-                        S[i][j] = 10;
-                    else if (Math.Abs(i - j) <= 6)
-                        S[i][j] = -Math.Abs(i - j);
-                    else
-                        S[i][j] = Math.Abs(i - j) - 12;
+                    for (int j = i; j < 12; j++)
+                    {
+                        if (i == j)
+                            S[i][j] = 10;
+                        else if (Math.Abs(i - j) <= 6)
+                            S[i][j] = -Math.Abs(i - j);
+                        else
+                            S[i][j] = Math.Abs(i - j) - 12;
 
-                    S[j][i] = S[i][j];
+                        S[j][i] = S[i][j];
+                    }
                 }
-            }
 
-            //GAP PENALTY
+                //GAP PENALTY
 
-            int d = -20;
+                int d = -20;
 
-            int[][] F = new int[A.Length + 1][];
+                int[][] F = new int[A.Length + 1][];
 
-            for (int i = 0; i < A.Length + 1; i++)
-            {
-                F[i] = new int[B.Length + 1];
-            }
-
-            for (int j = 0; j < B.Length + 1; j++)
-            {
-                F[0][j] = d * j;
-            }
-
-            for (int i = 0; i < A.Length + 1; i++)
-            {
-                F[i][0] = d * i;
-            }
-
-            for (int i = 1; i < A.Length + 1; i++)
-            {
-                for (int j = 1; j < B.Length + 1; j++)
+                for (int i = 0; i < A.Length + 1; i++)
                 {
-                    int Ai = A[i - 1];
-                    int Bj = B[j - 1];
-
-                    F[i][j] = Math.Max(Math.Max((F[i - 1][j - 1] + S[Ai][Bj]), (F[i][j - 1] + d)), (F[i - 1][j] + d));
+                    F[i] = new int[B.Length + 1];
                 }
-            }
 
-            string AlignA = "";
-            string AlignB = "";
+                for (int j = 0; j < B.Length + 1; j++)
+                {
+                    F[0][j] = d * j;
+                }
 
-            int ii = (A.Length);
-            int jj = (B.Length);
+                for (int i = 0; i < A.Length + 1; i++)
+                {
+                    F[i][0] = d * i;
+                }
 
-            while (ii > 0 && jj > 0)
-            {
+                for (int i = 1; i < A.Length + 1; i++)
+                {
+                    for (int j = 1; j < B.Length + 1; j++)
+                    {
+                        int Ai = A[i - 1];
+                        int Bj = B[j - 1];
 
-                int Score = F[ii][jj];
-                int ScoreDiag = F[ii - 1][jj - 1];
-                int ScoreUp = F[ii][jj - 1];
-                int ScoreLeft = F[ii - 1][jj];
+                        F[i][j] = Math.Max(Math.Max((F[i - 1][j - 1] + S[Ai][Bj]), (F[i][j - 1] + d)), (F[i - 1][j] + d));
+                    }
+                }
 
-                int Ai = (A[ii - 1]);
-                int Bj = (B[jj - 1]);
+                string AlignA = "";
+                string AlignB = "";
 
-                if (Score == ScoreDiag + S[Ai][Bj])
+                int ii = (A.Length);
+                int jj = (B.Length);
+
+                while (ii > 0 && jj > 0)
+                {
+
+                    int Score = F[ii][jj];
+                    int ScoreDiag = F[ii - 1][jj - 1];
+                    int ScoreUp = F[ii][jj - 1];
+                    int ScoreLeft = F[ii - 1][jj];
+
+                    int Ai = (A[ii - 1]);
+                    int Bj = (B[jj - 1]);
+
+                    if (Score == ScoreDiag + S[Ai][Bj])
+                    {
+                        AlignA = Enum.GetName(typeof(musicNote.notePitch), (A[ii - 1])) + AlignA;
+                        AlignB = Enum.GetName(typeof(musicNote.notePitch), (B[jj - 1])) + AlignB;
+
+                        ii = ii - 1;
+                        jj = jj - 1;
+
+                    }
+
+                    else if (Score == ScoreUp + d)
+                    {
+                        AlignA = "  " + AlignA;
+                        AlignB = Enum.GetName(typeof(musicNote.notePitch), (B[jj - 1])) + AlignB;
+
+                        jj = jj - 1;
+                    }
+
+                    else if (Score == ScoreLeft + d)
+                    {
+                        AlignA = Enum.GetName(typeof(musicNote.notePitch), (A[ii - 1])) + AlignA;
+                        AlignB = "  " + AlignB;
+
+                        ii = ii - 1;
+
+                    }
+                }
+
+                while (ii > 0)
                 {
                     AlignA = Enum.GetName(typeof(musicNote.notePitch), (A[ii - 1])) + AlignA;
-                    AlignB = Enum.GetName(typeof(musicNote.notePitch), (B[jj - 1])) + AlignB;
+                    AlignB = "  " + AlignB;
 
                     ii = ii - 1;
-                    jj = jj - 1;
-
                 }
 
-                else if (Score == ScoreUp + d)
+                while (jj > 0)
                 {
                     AlignA = "  " + AlignA;
                     AlignB = Enum.GetName(typeof(musicNote.notePitch), (B[jj - 1])) + AlignB;
@@ -1100,45 +1131,19 @@ namespace DigitalMusicAnalysis
                     jj = jj - 1;
                 }
 
-                else if (Score == ScoreLeft + d)
-                {
-                    AlignA = Enum.GetName(typeof(musicNote.notePitch), (A[ii - 1])) + AlignA;
-                    AlignB = "  " + AlignB;
+                System.Console.Out.Write("\n\n----------------  String Matching ------------------\n\n");
 
-                    ii = ii - 1;
+                System.Console.Out.Write(AlignA + "\n");
+                System.Console.Out.Write(AlignB + "\n");
 
-                }
+                string[] returnArray = new string[2];
+
+                returnArray[0] = AlignA;
+                returnArray[1] = AlignB;
+
+                return returnArray;
             }
 
-            while (ii > 0)
-            {
-                AlignA = Enum.GetName(typeof(musicNote.notePitch), (A[ii - 1])) + AlignA;
-                AlignB = "  " + AlignB;
-
-                ii = ii - 1;
-            }
-
-            while (jj > 0)
-            {
-                AlignA = "  " + AlignA;
-                AlignB = Enum.GetName(typeof(musicNote.notePitch), (B[jj - 1])) + AlignB;
-
-                jj = jj - 1;
-            }
-
-            System.Console.Out.Write("\n\n----------------  String Matching ------------------\n\n");
-
-            System.Console.Out.Write(AlignA + "\n");
-            System.Console.Out.Write(AlignB + "\n");
-            
-            string[] returnArray = new string[2];
-
-            returnArray[0] = AlignA;
-            returnArray[1] = AlignB;
-
-            return returnArray;
         }
 
     }
-
-}
