@@ -7,7 +7,8 @@ namespace DigitalMusicAnalysis
     {
         public double baseFreq;
         public double[] heights;
-        public float div; 
+        public float div;
+        
 
         public noteGraph(float inRange, float divisor)
         {
@@ -20,7 +21,7 @@ namespace DigitalMusicAnalysis
         public void setRectHeights(float[] values)
         {
           Parallel.For( 0, heights.Length, new ParallelOptions()
-          { MaxDegreeOfParallelism = System.Environment.ProcessorCount }, ii=>
+          { MaxDegreeOfParallelism =  4 }, ii=>
            // for (int ii = 0; ii < heights.Length; ii++)
             {
                 int index = (int)Math.Floor(baseFreq / div + ii);

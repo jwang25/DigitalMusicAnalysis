@@ -20,7 +20,7 @@ namespace DigitalMusicAnalysis
 	    public short BitsPerSample;
 	    public char[] Subchunk2ID = new char[4];
 	    public int Subchunk2Size;
-
+        const int thread_num = 4;
         public wavefile(FileStream file)
         {
             BinaryReader binRead = new BinaryReader(file);
@@ -44,11 +44,14 @@ namespace DigitalMusicAnalysis
             wave = new float[numSamples];
 
             data = binRead.ReadBytes(numSamples);
-
-            for (int i = 0; i < numSamples; i++)
-            {
+            //Parallel.For(0, numSamples, new ParallelOptions()
+            //{ MaxDegreeOfParallelism = thread_num } //System.Environment.ProcessorCount}
+           //, i =>
+           for (int i = 0; i < numSamples; i++)
+           {
                 wave[i] = ((float)data[i] - 128) / 128;
             }
+            //);
 
         }
     }
